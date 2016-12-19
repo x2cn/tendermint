@@ -58,7 +58,7 @@ func GetConfig(rootDir string) cfg.Config {
 	mapConfig.SetDefault("moniker", "anonymous")
 	mapConfig.SetDefault("node_laddr", "tcp://0.0.0.0:46656")
 	mapConfig.SetDefault("seeds", "")
-	// mapConfig.SetDefault("seeds", "goldenalchemist.chaintest.net:46656")
+	mapConfig.SetDefault("seeds_limit", 0)
 	mapConfig.SetDefault("fast_sync", true)
 	mapConfig.SetDefault("skip_upnp", false)
 	mapConfig.SetDefault("addrbook_file", rootDir+"/addrbook.json")

@@ -3,6 +3,7 @@ package node
 import (
 	"bytes"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
@@ -25,9 +26,9 @@ import (
 	sm "github.com/tendermint/tendermint/state"
 	"github.com/tendermint/tendermint/types"
 	"github.com/tendermint/tendermint/version"
-)
 
-import _ "net/http/pprof"
+	_ "net/http/pprof"
+)
 
 type Node struct {
 	config           cfg.Config
@@ -353,6 +354,16 @@ func RunNode(config cfg.Config) {
 	// If seedNode is provided by config, dial out.
 	if config.GetString("seeds") != "" {
 		seeds := strings.Split(config.GetString("seeds"), ",")
+		// Limit number of seeds?
+		if limit := config.GetInt("seeds_limit"); limit != 0 && len(seeds) > limit {
+			// Shuffle seeds
+			for i := range seeds {
+				j := rand.Intn(i + 1)
+				seeds[i], seeds[j] = seeds[j], seeds[i]
+			}
+			// Get first `limit` seeds after shuffle
+			seeds = seeds[:limit]
+		}
 		n.sw.DialSeeds(seeds)
 	}
 

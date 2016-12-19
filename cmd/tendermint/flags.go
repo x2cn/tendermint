@@ -13,6 +13,7 @@ func parseFlags(config cfg.Config, args []string) {
 		moniker       string
 		nodeLaddr     string
 		seeds         string
+		seedsLimit    int
 		fastSync      bool
 		skipUPNP      bool
 		rpcLaddr      string
@@ -28,6 +29,7 @@ func parseFlags(config cfg.Config, args []string) {
 	flags.StringVar(&moniker, "moniker", config.GetString("moniker"), "Node Name")
 	flags.StringVar(&nodeLaddr, "node_laddr", config.GetString("node_laddr"), "Node listen address. (0.0.0.0:0 means any interface, any port)")
 	flags.StringVar(&seeds, "seeds", config.GetString("seeds"), "Comma delimited host:port seed nodes")
+	flags.IntVar(&seedsLimit, "seeds_limit", config.GetInt("seeds_limit"), "Maximum number of seed nodes to dial out to. 0 means unlimited")
 	flags.BoolVar(&fastSync, "fast_sync", config.GetBool("fast_sync"), "Fast blockchain syncing")
 	flags.BoolVar(&skipUPNP, "skip_upnp", config.GetBool("skip_upnp"), "Skip UPNP configuration")
 	flags.StringVar(&rpcLaddr, "rpc_laddr", config.GetString("rpc_laddr"), "RPC listen address. Port required")
@@ -46,6 +48,7 @@ func parseFlags(config cfg.Config, args []string) {
 	config.Set("moniker", moniker)
 	config.Set("node_laddr", nodeLaddr)
 	config.Set("seeds", seeds)
+	config.Set("seeds_limit", seedsLimit)
 	config.Set("fast_sync", fastSync)
 	config.Set("skip_upnp", skipUPNP)
 	config.Set("rpc_laddr", rpcLaddr)
