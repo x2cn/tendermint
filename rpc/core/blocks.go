@@ -53,17 +53,17 @@ func Commit(height int) (*ctypes.ResultCommit, error) {
 	}
 	storeHeight := blockStore.Height()
 	if height > storeHeight {
-		return nil, fmt.Errorf("Height must be less than the current blockchain height")
+		return nil, fmt.Errorf("Height must be less than or equal to the current blockchain height")
 	}
 
 	// If the next block has not been committed yet,
 	// use a non-canonical commit
 	if height == storeHeight+1 {
 		commit := blockStore.LoadSeenCommit(height)
-		return &ctypes.ResultCommit{commit}, nil
+		return &ctypes.ResultCommit{commit, false}, nil
 	}
 
 	// Return the canonical commit (comes from the block at height+1)
 	commit := blockStore.LoadBlockCommit(height)
-	return &ctypes.ResultCommit{commit}, nil
+	return &ctypes.ResultCommit{commit, true}, nil
 }
