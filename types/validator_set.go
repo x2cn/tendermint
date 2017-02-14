@@ -205,6 +205,70 @@ func (valSet *ValidatorSet) Iterate(fn func(index int, val *Validator) bool) {
 	}
 }
 
+// Verify that +2/3 of the set has signed a single blockID
+func (valSet *ValidatorSet) VerifyCommitReturnBlockID(chainID string, height int, commit *Commit) (BlockID, error) {
+	var blockID BlockID
+	if valSet.Size() != len(commit.Precommits) {
+		return blockID, fmt.Errorf("Invalid commit -- wrong set size: %v vs %v", valSet.Size(), len(commit.Precommits))
+	}
+	if height != commit.Height() {
+		return blockID, fmt.Errorf("Invalid commit -- wrong height: %v vs %v", height, commit.Height())
+	}
+
+	// stores the blockID and the votes for it
+	type blockInfo struct {
+		blockID BlockID
+		power   int64
+	}
+
+	// map from blockhash to blockID and voting power
+	talliedVotingPower := make(map[string]*blockInfo)
+	round := commit.Round()
+
+	// tally the voting power for all blockIDs
+	for idx, precommit := range commit.Precommits {
+		// may be nil if validator skipped.
+		if precommit == nil {
+			continue
+		}
+
+		_, val := valSet.GetByIndex(idx)
+		if err := validatePrecommit(precommit, val, idx, height, round, chainID); err != nil {
+			return blockID, err
+		}
+
+		// add the voting power for this blockID
+		key := string(precommit.BlockID.Hash)
+		info, ok := talliedVotingPower[key]
+		if ok {
+			info.power += val.VotingPower
+			talliedVotingPower[key] = info
+		} else {
+			talliedVotingPower[key] = &blockInfo{
+				blockID: precommit.BlockID,
+				power:   val.VotingPower,
+			}
+		}
+	}
+
+	// find the blockID with more than twoThirds
+	twoThirdsPower := valSet.TotalVotingPower() * 2 / 3
+	var bestID BlockID
+	var bestPower int64
+	for _, info := range talliedVotingPower {
+		if info.power > twoThirdsPower {
+			return info.blockID, nil
+		}
+
+		if info.power > bestPower {
+			bestPower = info.power
+			bestID = info.blockID
+		}
+	}
+	return blockID, fmt.Errorf("Invalid commit -- best blockID (%v) has insufficient voting power: got %v, needed %v",
+		bestID, bestPower, twoThirdsPower+1)
+}
+
 // Verify that +2/3 of the set had signed the given signBytes
 func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height int, commit *Commit) error {
 	if valSet.Size() != len(commit.Precommits) {
@@ -222,21 +286,12 @@ func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height
 		if precommit == nil {
 			continue
 		}
-		if precommit.Height != height {
-			return fmt.Errorf("Invalid commit -- wrong height: %v vs %v", height, precommit.Height)
-		}
-		if precommit.Round != round {
-			return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
-		}
-		if precommit.Type != VoteTypePrecommit {
-			return fmt.Errorf("Invalid commit -- not precommit @ index %v", idx)
-		}
+
 		_, val := valSet.GetByIndex(idx)
-		// Validate signature
-		precommitSignBytes := SignBytes(chainID, precommit)
-		if !val.PubKey.VerifyBytes(precommitSignBytes, precommit.Signature) {
-			return fmt.Errorf("Invalid commit -- invalid signature: %v", precommit)
+		if err := validatePrecommit(precommit, val, idx, height, round, chainID); err != nil {
+			return err
 		}
+
 		if !blockID.Equals(precommit.BlockID) {
 			continue // Not an error, but doesn't count
 		}
@@ -250,6 +305,24 @@ func (valSet *ValidatorSet) VerifyCommit(chainID string, blockID BlockID, height
 		return fmt.Errorf("Invalid commit -- insufficient voting power: got %v, needed %v",
 			talliedVotingPower, (valSet.TotalVotingPower()*2/3 + 1))
 	}
+}
+
+func validatePrecommit(precommit *Vote, val *Validator, idx, height, round int, chainID string) error {
+	if precommit.Height != height {
+		return fmt.Errorf("Invalid commit -- wrong height: %v vs %v", height, precommit.Height)
+	}
+	if precommit.Round != round {
+		return fmt.Errorf("Invalid commit -- wrong round: %v vs %v", round, precommit.Round)
+	}
+	if precommit.Type != VoteTypePrecommit {
+		return fmt.Errorf("Invalid commit -- not precommit @ index %v", idx)
+	}
+	// Validate signature
+	precommitSignBytes := SignBytes(chainID, precommit)
+	if !val.PubKey.VerifyBytes(precommitSignBytes, precommit.Signature) {
+		return fmt.Errorf("Invalid commit -- invalid signature: %v", precommit)
+	}
+	return nil
 }
 
 // Verify that +2/3 of this set had signed the given signBytes.

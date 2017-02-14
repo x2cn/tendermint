@@ -9,6 +9,7 @@ N=$1
 # 	wait to have N-1 peers
 #	wait to be at height > 1
 ###################################################################
+# TODO: a Go tool that does this waiting stuff for us?
 
 # wait for everyone to come online
 echo "Waiting for nodes to come online"
