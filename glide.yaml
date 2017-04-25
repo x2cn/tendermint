@@ -1,7 +1,7 @@
 package: github.com/tendermint/tendermint
 import:
 - package: github.com/tendermint/go-autofile
-  version: develop
+  version: bugfix/rotating-fails-on-windows
 - package: github.com/tendermint/go-clist
   version: develop
 - package: github.com/tendermint/go-common
@@ -50,7 +50,6 @@ import:
   - ripemd160
 testImport:
 - package: github.com/stretchr/testify
-  version: ^1.1.4
   subpackages:
   - assert
   - require

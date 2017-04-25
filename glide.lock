@@ -1,5 +1,5 @@
-hash: d9724aa287c40d1b3856b6565f09235d809c8b2f7c6537c04f597137c0d6cd26
-updated: 2017-04-21T13:09:25.708801802-04:00
+hash: da1e4020b73cadf8dbc644defa8bf58ad03a3c2c60e24839aca0668aec88b3e5
+updated: 2017-04-25T09:20:46.110901573Z
 imports:
 - name: github.com/btcsuite/btcd
   version: 4b348c1d33373d672edd83fc576892d0e46686d2
@@ -80,7 +80,7 @@ imports:
   - edwards25519
   - extra25519
 - name: github.com/tendermint/go-autofile
-  version: 48b17de82914e1ec2f134ce823ba426337d2c518
+  version: c1cc238b38d154d01da9c70f64867f675965639e
 - name: github.com/tendermint/go-clist
   version: 3baa390bbaf7634251c42ad69a8682e7e3990552
 - name: github.com/tendermint/go-common
