@@ -538,7 +538,7 @@ func (wsc *wsConnection) writeRoutine() {
 				return
 			}
 		case msg := <-wsc.writeChan:
-			jsonBytes, err := json.Marshal(msg)
+			jsonBytes, err := json.MarshalIndent(msg, "", "  ")
 			if err != nil {
 				log.Error("Failed to marshal RPCResponse to JSON", "error", err)
 			} else {
